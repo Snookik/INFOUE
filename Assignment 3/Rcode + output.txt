@@ -1,0 +1,305 @@
+# Read the unpruned datasets for each version
+library(readr)
+dataA <- read_csv("D:/Dropbox/UEUXopdr3/dataA.csv") 
+dataB <- read_csv("D:/Dropbox/UEUXopdr3/dataB.csv")
+
+# Caluclate the total time taken for each test.
+dataA$time <- dataA$endtime - dataA$starttime
+dataB$time <- dataB$endtime - dataB$starttime
+
+# Remove the extra columns after copying the original in order to combine the results to one data.frame
+dataBnew <- dataB
+dataBnew$time1 <- NULL
+dataBnew$time2 <- NULL
+data <- rbind(dataA, dataBnew)
+
+# Execute a t-test and show the results
+ttest <- t.test(dataA$time, dataB$time)
+ttest
+
+#	Welch Two Sample t-test
+
+#data:  dataA$time and dataB$time
+#t = -0.478, df = 27.4, p-value = 0.64
+#alternative hypothesis: true difference in means is not equal to 0
+#95 percent confidence interval:
+# -72.967  45.391
+#sample estimates:
+#mean of x mean of y 
+#   129.15    142.94 
+
+#calculate the mean difference of the time taken
+mean(dataA$time) - mean(dataB$time)
+# result: [1] -13.788
+
+
+#--------------------------------------------------------
+
+#Pruned dataset
+
+# Read the datasets for eacht test
+library(readr)
+dataA <- read_csv("D:/Dropbox/UEUXopdr3/dataApruned.csv")
+dataB <- read_csv("D:/Dropbox/UEUXopdr3/dataBpruned.csv")
+
+# Caluclate the total time taken for each test.
+dataA$time <- dataA$endtime - dataA$starttime
+dataB$time <- dataB$endtime - dataB$starttime
+
+# Remove the extra columns after copying the original in order to combine the results to one data.frame
+dataBnew <- dataB
+dataBnew$time1 <- NULL
+dataBnew$time2 <- NULL
+data <- rbind(dataA, dataBnew)
+rm(dataBnew)
+
+# Execute a t-test and show the results
+ttest <- t.test(dataA$time, dataB$time)
+ttest
+
+#	Welch Two Sample t-test
+#
+#data:  dataA$time and dataB$time
+#t = -1.52, df = 29.8, p-value = 0.14
+#alternative hypothesis: true difference in means is not equal to 0
+#95 percent confidence interval:
+# -56.3658   8.2925
+#sample estimates:
+#mean of x mean of y 
+#   106.90    130.93 
+
+# Execute a paired t-test and show the results
+ttest <- t.test(dataA$time, dataB$time, paired = TRUE)
+ttest
+
+#	Paired t-test
+#
+#data:  dataA$time and dataB$time
+#t = -1.4469, df = 15, p-value = 0.1685
+#alternative hypothesis: true difference in means is not equal to 0
+#95 percent confidence interval:
+# -59.44604  11.37274
+#sample estimates:
+#mean of the differences 
+#              -24.03665 
+
+#calculate the mean difference of the time taken
+mean(dataA$time) - mean(dataB$time)
+# result: [1] -24.037
+
+# Calculate summary statistics for each group
+library(dplyr)
+md <- data %>%
+  group_by(version) %>%
+  summarize(N = length(time),
+		    Mean = mean(time),
+		    SD = sd(time),
+ 	        SE = SD/sqrt(N),
+ 	        Variance = var(time))
+md
+
+knitr::kable(md, digits = 2) #required the package knitr
+
+#|version |  N|   Mean|    SD|    SE|
+#|:-------|--:|------:|-----:|-----:|
+#|A       | 16| 106.90| 42.85| 10.71|
+#|B       | 16| 130.93| 46.59| 11.65|
+
+###############################################
+# 					BAR PLOT                  # Results from plot functions can be found in the statpics folder.
+###############################################
+library(ggplot2)
+
+# Initialize colors for all plots
+fillColors <- function(...){
+    scale_fill_manual(values = alpha(c("blue","red"),0.5),...)
+}
+
+scale_fill_discrete <- fillColors
+
+p <- ggplot(data = data, aes(y = time, 
+                          x = version,
+                          fill = version))
+
+p + stat_summary(fun.y = "mean", geom = "bar")
+
+# Error bars
+#might require library(Hmisc)
+p + stat_summary(fun.y = "mean", geom = "bar") + stat_summary(fun.data = "mean_cl_normal", geom = "errorbar", width = 0.1) +  labs(x = "Version", y = "Time in seconds")
+
+###############################################
+# 					BOX PLOT                  # Results from plot functions can be found in the statpics folder.
+###############################################
+p + geom_boxplot() + labs(x = "Version", y = "Time in seconds")
+
+###############################################
+# 				DENSITY PLOT                  # Results from plot functions can be found in the statpics folder.
+###############################################
+ggplot(data, aes(x = time, fill = version)) + geom_density(color = NA) + labs (x = "Time in seconds", y = "Density")
+
+#########################################################################
+# Scatterplot for questionnaire age - time results with regression line # Results from plot functions can be found in the statpics folder.
+#########################################################################
+
+# For version A
+plot(dataA$age, dataA$time, pch=19, xlab="Age", ylab="Time in seconds", cex.lab=1.5)
+abline(lm(dataA$time~dataA$age), col="red")
+lm(dataA$time~dataA$age)
+summary(lm(dataA$time~dataA$age))
+
+# For version B
+plot(dataB$age, dataB$time, pch=19, xlab="Age", ylab="Time in seconds", cex.lab=1.5)
+abline(lm(dataB$time~dataB$age), col="red")
+lm(dataB$time~dataB$age)
+summary(lm(dataB$time~dataB$age))
+
+# For both versions
+plot(data$age, data$time, pch=19, xlab="Age", ylab="Time in seconds", cex.lab=1.5)
+abline(lm(data$time~data$age), col="red")
+lm(data$time~data$age)
+summary(lm(data$time~data$age))
+
+# Pearson correlation coefficient
+library(Hmisc)
+rcorr(cbind(dataA$time, dataA$age), type="pearson") # time - age
+rcorr(cbind(dataB$time, dataB$age), type="pearson") # time - age
+
+# rcorr(cbind(dataB$time, dataB$usedTabs), type="pearson") # time - age
+# rcorr(cbind(dataB$time, dataB$usedTabs), type="pearson") # time - age
+
+#############################################################################################
+# Logistic regression with usedTabs to predict wheter someone used tabs to increase speeds  # Results from plot functions can be found in the statpics folder.
+#############################################################################################
+
+# Version A
+plot(dataA$time, dataA$usedTabs, xlab="Time (in seconds)", ylab="Probability of using Tabs", xlim=c(0,250))
+model = glm(usedTabs ~ time, data = dataA, family = binomial, na.action = na.omit)
+summary(model)
+
+#Call:
+#glm(formula = usedTabs ~ time, family = binomial, data = dataA, 
+#    na.action = na.omit)
+#
+#Deviance Residuals: 
+#    Min       1Q   Median       3Q      Max  
+#-2.0505  -0.7456   0.4053   0.6587   1.5276  
+#
+#Coefficients:
+#            Estimate Std. Error z value Pr(>|z|)  
+#(Intercept)  4.71915    2.27307   2.076   0.0379 *
+#time        -0.03716    0.01845  -2.014   0.0440 *
+#---
+#Signif. codes:  
+#0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#
+#(Dispersion parameter for binomial family taken to be 1)
+#
+#    Null deviance: 21.170  on 15  degrees of freedom
+#Residual deviance: 15.132  on 14  degrees of freedom
+#AIC: 19.132
+#
+#Number of Fisher Scoring iterations: 4
+
+# Pseudo R-squared 
+library(rcompanion)
+nagelkerke(model)
+
+#$Models
+#                                                       
+#Model: "glm, usedTabs ~ time, binomial, dataA, na.omit"
+#Null:  "glm, usedTabs ~ 1, binomial, dataA, na.omit"   
+#
+#$Pseudo.R.squared.for.model.vs.null
+#                             Pseudo.R.squared
+#McFadden                             0.285238
+#Cox and Snell (ML)                   0.314362
+#Nagelkerke (Cragg and Uhler)         0.428463
+#
+#$Likelihood.ratio.test
+# Df.diff LogLik.diff  Chisq  p.value
+#      -1     -3.0192 6.0385 0.013997
+#
+#$Messages
+#[1] "Note: For models fit with REML, these statistics are based on refitting with ML"
+
+# Draw the curve and points on the plot
+curve(predict(model,data.frame(time=x),type="resp"),add=TRUE, col="red")
+points(dataA$time,fitted(model),pch=20, col='black')
+
+# Perform performance test on the usedTabs section of dataB
+library(ROCR)
+p <- predict(model, newdata=subset(data, type="response"))
+pr <- prediction(p, data$usedTabs)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+windows(title="ROC curve")
+plot(prf, cex.lab=1.5)
+ 
+auc <- performance(pr, measure = "auc")
+auc <- auc@y.values[[1]]
+auc # result: 0.7083333
+
+#-------------------------------------
+
+# Version B
+plot(dataB$time, dataB$usedTabs, xlab="Time (in seconds)", ylab="Probability of using Tabs", xlim=c(0,250))
+model = glm(usedTabs ~ time, data = dataB, family = binomial, na.action = na.omit)
+summary(model)
+
+#Call:
+#glm(formula = usedTabs ~ time, family = binomial, data = dataB, 
+#    na.action = na.omit)
+#
+#Deviance Residuals: 
+#     Min        1Q    Median        3Q       Max  
+#-1.87126   0.05782   0.62414   0.73390   1.18132  
+#
+#Coefficients:
+#            Estimate Std. Error z value Pr(>|z|)
+#(Intercept)  2.66738    1.87750   1.421    0.155
+#time        -0.01150    0.01261  -0.912    0.362
+#
+#(Dispersion parameter for binomial family taken to be 1)
+#
+#    Null deviance: 17.995  on 15  degrees of freedom
+#Residual deviance: 17.147  on 14  degrees of freedom
+#AIC: 21.147
+#
+#Number of Fisher Scoring iterations: 4
+
+# Pseudo R-squared 
+library(rcompanion)
+nagelkerke(model)
+
+#$Models
+#                                                       
+#Model: "glm, usedTabs ~ time, binomial, dataB, na.omit"
+#Null:  "glm, usedTabs ~ 1, binomial, dataB, na.omit"   
+#
+#$Pseudo.R.squared.for.model.vs.null
+#                             Pseudo.R.squared
+#McFadden                            0.0471200
+#Cox and Snell (ML)                  0.0516147
+#Nagelkerke (Cragg and Uhler)        0.0764391
+#
+#$Likelihood.ratio.test
+# Df.diff LogLik.diff   Chisq p.value
+#      -1    -0.42396 0.84791 0.35714
+#
+#$Messages
+#[1] "Note: For models fit with REML, these statistics are based on refitting with ML"
+
+# Draw the curve and points on the plot
+curve(predict(model,data.frame(time=x),type="resp"),add=TRUE, col="red")
+points(dataB$time,fitted(model),pch=20, col='black')
+
+# Perform performance test on the usedTabs section of dataA
+library(ROCR)
+p <- predict(model, newdata=subset(dataA, type="response"))
+pr <- prediction(p, dataA$usedTabs)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+windows(title="ROC curve")
+plot(prf, cex.lab=1.5)
+ 
+auc <- performance(pr, measure = "auc")
+auc <- auc@y.values[[1]]
+auc # 0.8666667
