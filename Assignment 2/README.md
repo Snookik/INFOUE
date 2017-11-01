@@ -1,4 +1,4 @@
-# INFOUE
+# Modelling Fitts' Law for Touch Screen Devices
 [![GitHub issues](https://img.shields.io/github/issues/Snookik/INFOUE.svg)](https://github.com/Snookik/INFOUE/issues)
 [![GitHub forks](https://img.shields.io/github/forks/Snookik/INFOUE.svg)](https://github.com/Snookik/INFOUE/network)
 [![GitHub stars](https://img.shields.io/github/stars/Snookik/INFOUE.svg)](https://github.com/Snookik/INFOUE/stargazers)
@@ -19,6 +19,17 @@ where T is the time to complete the task, 𝑅𝑇 is reaction time, 𝑀𝑇 is
 
 𝑎 and 𝑏 can be approximated with linear regression using 𝑀𝑇 as the dependent variable and 𝐼𝐷 as the independent (criterion) variable, where 𝐼𝐷 = 𝑙𝑜𝑔2(2𝐴 / 𝑊 + 1)
 
+## Example of the testing app for smartphones
+
+To achieve our initial research goal, a simple applet was written in Processing.js. Processing.js specifically was chosen for its quick prototyping capabilities, multi-platform compatibility and browser-based nature. All these factors made it simple to write and iterate on the applet, and get it running on all available test devices.
+
+The experiment used a 2 x 2 x 2 x 2 between-subjects design. Controlled variables were device (two levels), success (two levels; TRUE and FASLE), target amplitude (two levels), target width (two levels). Dependent variables were movement time (MT), error rate (calculated from the recorded coordinates), and the index of performance (𝐼𝑃 = 1 / 𝑏, from 𝑀𝑇 = 𝑎 + 𝑏 𝐼𝐷; 𝐼𝐷 calculated using the Shannon formulation). Movement time was measured from when the participant’s touch location is within the movable box (starting a dragging movement) to when the participant’s finger releases from the screen (ending a dragging movement).
+
+<p align="center">
+<img src="https://i.imgur.com/eadmHOh.png" width="400"/>
+</p>
+
+
 ## Acquiring W using R
 
 To calculate if Fitts’ law still holds for the modern devices the test was carried out on, Shannon’s original formula (Shannon, C. E., & Weaver, W., 1949) was used:
@@ -27,11 +38,13 @@ To calculate if Fitts’ law still holds for the modern devices the test was car
 
 With 𝐼𝐷 = Index of Difficulty in bits, 𝐴 = Amplitude in inches and 𝑊 = width of target in inches. Shannon’s formula specifically was used because Fitts’ formulation of the law tends to fail for sufficiently small ID values (MacKenzie, I. S., 1989). As our first set of rounds has a large goal size with low distance.
 
-To say that Fitts’ law still holds one would have to show that the relationship between the ID of a task and the time taken to accomplish the task is a linear one. Considering the nature of the tests, A is easily available as it was one of the key changing variables in the series of tasks. A simple R script is used to calculate W using the assumption of a straight drag from the black box to the green one. This assumption is made so that the computation of W in a 2D field can be reduced to a 1D problem, greatly reducing the problem in complexity. The script calculates the intersection points between the line formed by using the middle of the two boxes as anchor points and the green goal box, and then calculates the distance between those two intersection points.
+To say that Fitts’ law still holds one would have to show that the relationship between the ID of a task and the time taken to accomplish the task is a linear one. Considering the nature of the tests, A is easily available as it was one of the key changing variables in the series of tasks. A simple R script was used to calculate W using the assumption of a straight drag from the black box to the green one. This assumption is made so that the computation of W in a 2D field can be reduced to a 1D problem, greatly reducing the problem in complexity. The script calculates the intersection points between the line formed by using the middle of the two boxes as anchor points and the green goal box, and then calculates the distance between those two intersection points.
 
-![Acquiring W](https://i.imgur.com/8TATHxs.png)
+<p align="center">
+<img src="https://i.imgur.com/8TATHxs.png" width="400"/>
+</p>
 
-```R
+``` R
 acquireW <- function(startX, startY, endX, endY, boxSize) {
   if(endX - startX == 0) { 
   return(NA) 
